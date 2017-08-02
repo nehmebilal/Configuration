@@ -29,6 +29,13 @@ namespace Microsoft.Extensions.Configuration
         IConfigurationBuilder Add(IConfigurationSource source);
 
         /// <summary>
+        /// Adds a new configuration resolver. Note that resolvers are applied in the order they are added.
+        /// </summary>
+        /// <param name="resolver">The <see cref="IConfigurationResolver"/> to add.</param>
+        /// <returns>The same <see cref="IConfigurationBuilder"/>.</returns>
+        IConfigurationBuilder AddResolver(IConfigurationResolver resolver);
+
+        /// <summary>
         /// Builds an <see cref="IConfiguration"/> with keys and values from the set of sources registered in
         /// <see cref="Sources"/>.
         /// </summary>

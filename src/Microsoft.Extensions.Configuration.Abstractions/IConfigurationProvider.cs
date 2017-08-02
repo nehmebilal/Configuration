@@ -7,9 +7,23 @@ using Microsoft.Extensions.Primitives;
 namespace Microsoft.Extensions.Configuration
 {
     /// <summary>
+    /// A proxy for loading and tracking changes in a configuration source.
+    /// </summary>
+    public interface IConfigurationProxy
+    {
+        /// <returns>A change token if this provider supports change tracking, null otherwise</returns>
+        IChangeToken GetReloadToken();
+
+        /// <summary>
+        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>.
+        /// </summary>
+        void Load();
+    }
+
+    /// <summary>
     /// Provides configuration key/values for an application.
     /// </summary>
-    public interface IConfigurationProvider
+    public interface IConfigurationProvider : IConfigurationProxy
     {
         /// <summary>
         /// Tries to get a configuration value for the specified key.
@@ -25,17 +39,6 @@ namespace Microsoft.Extensions.Configuration
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
         void Set(string key, string value);
-
-        /// <summary>
-        /// Returns a change token if this provider supports change tracking, null otherwise.
-        /// </summary>
-        /// <returns></returns>
-        IChangeToken GetReloadToken();
-
-        /// <summary>
-        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>.
-        /// </summary>
-        void Load();
 
         /// <summary>
         /// Returns the immediate descendant configuration keys for a given parent path based on this

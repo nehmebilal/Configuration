@@ -4,18 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.Extensions.Configuration
 {
     /// <summary>
     /// Base helper class for implementing an <see cref="IConfigurationProvider"/>
     /// </summary>
-    public abstract class ConfigurationProvider : IConfigurationProvider
+    public abstract class ConfigurationProvider : BaseConfigurationProxy, IConfigurationProvider
     {
-        private ConfigurationReloadToken _reloadToken = new ConfigurationReloadToken();
-
         /// <summary>
         /// Initializes a new <see cref="IConfigurationProvider"/>
         /// </summary>
@@ -49,13 +45,6 @@ namespace Microsoft.Extensions.Configuration
         {
             Data[key] = value;
         }
-
-        /// <summary>
-        /// Loads (or reloads) the data for this provider.
-        /// </summary>
-        public virtual void Load()
-        {
-        }
        
         /// <summary>
         /// Returns the list of keys that this provider has.
@@ -80,24 +69,6 @@ namespace Microsoft.Extensions.Configuration
         {
             var indexOf = key.IndexOf(ConfigurationPath.KeyDelimiter, prefixLength, StringComparison.OrdinalIgnoreCase);
             return indexOf < 0 ? key.Substring(prefixLength) : key.Substring(prefixLength, indexOf - prefixLength);
-        }
-
-        /// <summary>
-        /// Returns a <see cref="IChangeToken"/> that can be used to listen when this provider is reloaded.
-        /// </summary>
-        /// <returns></returns>
-        public IChangeToken GetReloadToken()
-        {
-            return _reloadToken;
-        }
-
-        /// <summary>
-        /// Triggers the reload change token and creates a new one.
-        /// </summary>
-        protected void OnReload()
-        {
-            var previousToken = Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken());
-            previousToken.OnReload();
         }
     }
 }

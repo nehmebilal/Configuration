@@ -17,6 +17,11 @@ namespace Microsoft.Extensions.Configuration
         public IList<IConfigurationSource> Sources { get; } = new List<IConfigurationSource>();
 
         /// <summary>
+        /// Returns the resolvers used to resolve configuration values (if any).
+        /// </summary>
+        public IList<IConfigurationResolver> Resolvers { get; } = new List<IConfigurationResolver>();
+
+        /// <summary>
         /// Gets a key/value collection that can be used to share data between the <see cref="IConfigurationBuilder"/>
         /// and the registered <see cref="IConfigurationProvider"/>s.
         /// </summary>
@@ -39,6 +44,21 @@ namespace Microsoft.Extensions.Configuration
         }
 
         /// <summary>
+        /// Adds a new configuration resolver.
+        /// </summary>
+        /// <param name="resolver">The <see cref="IConfigurationResolver"/> to add</param>
+        /// <returns>The same <see cref="IConfigurationBuilder"/>.</returns>
+        public IConfigurationBuilder AddResolver(IConfigurationResolver resolver)
+        {
+            if (resolver == null)
+            {
+                throw new ArgumentNullException(nameof(resolver));
+            }
+            Resolvers.Add(resolver);
+            return this;
+        }
+
+        /// <summary>
         /// Builds an <see cref="IConfiguration"/> with keys and values from the set of providers registered in
         /// <see cref="Sources"/>.
         /// </summary>
@@ -51,7 +71,7 @@ namespace Microsoft.Extensions.Configuration
                 var provider = source.Build(this);
                 providers.Add(provider);
             }
-            return new ConfigurationRoot(providers);
+            return new ConfigurationRoot(providers, Resolvers);
         }
     }
 }

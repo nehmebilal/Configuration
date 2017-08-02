@@ -15,21 +15,29 @@ namespace Microsoft.Extensions.Configuration
     public class ConfigurationRoot : IConfigurationRoot
     {
         private IList<IConfigurationProvider> _providers;
+        private IList<IConfigurationResolver> _resolvers;
         private ConfigurationReloadToken _changeToken = new ConfigurationReloadToken();
 
         /// <summary>
         /// Initializes a Configuration root with a list of providers.
         /// </summary>
         /// <param name="providers">The <see cref="IConfigurationProvider"/>s for this configuration.</param>
-        public ConfigurationRoot(IList<IConfigurationProvider> providers)
+        /// <param name="resolvers">The <see cref="IConfigurationResolver"/>s for this configuration.</param>
+        public ConfigurationRoot(IList<IConfigurationProvider> providers, IList<IConfigurationResolver> resolvers)
         {
             if (providers == null)
             {
                 throw new ArgumentNullException(nameof(providers));
             }
 
+            if (resolvers == null)
+            {
+                throw new ArgumentNullException(nameof(resolvers));
+            }
+
             _providers = providers;
-            foreach (var p in providers)
+            _resolvers = resolvers;
+            foreach (var p in providers.Union<IConfigurationProxy>(resolvers))
             {
                 p.Load();
                 ChangeToken.OnChange(() => p.GetReloadToken(), () => RaiseChanged());
@@ -50,17 +58,28 @@ namespace Microsoft.Extensions.Configuration
         {
             get
             {
+                string value = null;
                 foreach (var provider in _providers.Reverse())
                 {
-                    string value;
 
                     if (provider.TryGet(key, out value))
                     {
-                        return value;
+                        break;
                     }
                 }
 
-                return null;
+                if (value == null)
+                {
+                    return null;
+                }
+
+                // resolvers are applied in-order and allow the value to be transformed multiple times
+                foreach (var resolver in _resolvers)
+                {
+                    value = resolver.Resolve(value);
+                }
+
+                return value;
             }
 
             set
@@ -120,7 +139,7 @@ namespace Microsoft.Extensions.Configuration
         /// </summary>
         public void Reload()
         {
-            foreach (var provider in _providers)
+            foreach (var provider in _providers.Union<IConfigurationProxy>(_resolvers))
             {
                 provider.Load();
             }
